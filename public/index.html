@@ -126,19 +126,23 @@ input.hinp::placeholder{color:var(--muted)}
 /* BOARD */
 .board-area{flex:1;overflow:hidden;display:flex;flex-direction:column;min-height:0}
 #phase-ideation{display:flex;flex:1;overflow:hidden;min-height:0}
-.ideas-board{flex:1;overflow-y:auto;padding:1rem 1.2rem;display:flex;flex-direction:column;gap:.72rem}
-.idea-block{background:var(--s1);border:1px solid var(--b1);border-radius:var(--r2);overflow:hidden;animation:fadeUp .3s ease}
+.ideas-board{flex:1;overflow-y:auto;padding:1rem 1.2rem;display:flex;flex-direction:column;gap:.72rem;padding-bottom:2rem}
+.idea-block{background:var(--s1);border:1px solid var(--b1);border-radius:var(--r2);overflow:visible;animation:fadeUp .3s ease;flex-shrink:0}
 @keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
-.ibh{padding:.58rem .88rem;border-bottom:1px solid var(--b1);display:flex;align-items:center;gap:.52rem}
+.ibh{padding:.58rem .88rem;border-bottom:1px solid var(--b1);display:flex;align-items:center;gap:.52rem;cursor:pointer;user-select:none}
+.ibh:hover{background:rgba(255,255,255,.02)}
 .ibav{width:23px;height:23px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.78rem;flex-shrink:0}
 .ibnm{font-size:.76rem;font-weight:500}
 .ibtag{font-size:.6rem;padding:.1rem .4rem;border-radius:4px;margin-left:auto;font-weight:500}
 .iblive{font-size:.56rem;padding:.07rem .35rem;border-radius:4px;background:rgba(74,184,160,.12);color:var(--teal);border:1px solid rgba(74,184,160,.2);margin-left:.3rem}
-.ibb{padding:.75rem .88rem}
-.ibidea{margin-bottom:.65rem}
-.ibidea:last-child{margin-bottom:0}
-.ibit{font-family:'Syne',sans-serif;font-size:.84rem;font-weight:700;margin-bottom:.26rem;line-height:1.3}
-.ibix{font-size:.78rem;color:#c0bdb5;line-height:1.56}
+.ibtoggle{font-size:.65rem;color:var(--muted);margin-left:.5rem;transition:transform .25s;flex-shrink:0;display:inline-block}
+.ibtoggle.open{transform:rotate(180deg)}
+.ibb{padding:.8rem .88rem;display:block}
+.ibb.collapsed{display:none}
+.ibidea{margin-bottom:.8rem;padding-bottom:.8rem;border-bottom:1px solid var(--b1)}
+.ibidea:last-child{margin-bottom:0;padding-bottom:0;border-bottom:none}
+.ibit{font-family:'Syne',sans-serif;font-size:.86rem;font-weight:700;margin-bottom:.4rem;line-height:1.35;color:var(--text)}
+.ibix{font-size:.82rem;color:#c8c5bc;line-height:1.68;white-space:pre-wrap}
 .ibf{padding:.42rem .88rem;border-top:1px solid var(--b1);display:flex;gap:.32rem;flex-wrap:wrap}
 .ibft{font-size:.6rem;padding:.14rem .42rem;border-radius:4px;background:var(--s3);color:var(--muted2);border:1px solid var(--b1)}
 .stream-card{background:var(--s1);border:1px solid var(--b1);border-radius:var(--r2);padding:.88rem 1.1rem;display:flex;align-items:center;gap:.68rem;animation:fadeUp .3s ease}
@@ -632,7 +636,12 @@ function renderIdeasFromDB(data){
 function buildIdeaCard(idea,id){
   const el=document.createElement('div'); el.className='idea-block'; el.dataset.id=id;
   const av=idea.contributorType==='human'?`background:${idea.bg};color:${idea.color};font-family:'Syne',sans-serif;font-weight:700;font-size:.6rem`:`background:${idea.bg}`;
-  el.innerHTML=`<div class="ibh"><div class="ibav" style="${av}">${idea.emoji}</div><span class="ibnm">${idea.contributor}</span><span class="ibtag" style="background:${idea.bg};color:${idea.color}">${idea.role}</span><span class="iblive">● live</span></div><div class="ibb"><div class="ibidea"><div class="ibit">${idea.title}</div><div class="ibix">${idea.body}</div></div></div>${idea.tags&&idea.tags.length?`<div class="ibf">${idea.tags.slice(0,4).map(t=>`<span class="ibft">#${t}</span>`).join('')}</div>`:''}`;
+  const paras=idea.body.split(/\n{2,}/).filter(p=>p.trim()).map(p=>`<p style='margin-bottom:.5rem'>${p.trim()}</p>`).join('');
+  el.innerHTML=`<div class="ibh"><div class="ibav" style="${av}">${idea.emoji}</div><span class="ibnm">${idea.contributor}</span><span class="ibtag" style="background:${idea.bg};color:${idea.color}">${idea.role}</span><span class="iblive">● live</span><span class="ibtoggle open">▾</span></div><div class="ibb"><div class="ibidea"><div class="ibit">${idea.title}</div><div class="ibix">${paras||idea.body}</div></div></div>${idea.tags&&idea.tags.length?`<div class="ibf">${idea.tags.slice(0,4).map(t=>`<span class="ibft">#${t}</span>`).join('')}</div>`:''}\`;
+  el.querySelector('.ibh').addEventListener('click',()=>{
+    const b=el.querySelector('.ibb'),t=el.querySelector('.ibtoggle'),open=!b.classList.contains('collapsed');
+    b.classList.toggle('collapsed',open); t.classList.toggle('open',!open);
+  });
   return el;
 }
 
