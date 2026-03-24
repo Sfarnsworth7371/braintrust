@@ -634,17 +634,39 @@ function renderIdeasFromDB(data){
 }
 
 function buildIdeaCard(idea,id){
-  const el=document.createElement('div'); el.className='idea-block'; el.dataset.id=id;
-  const av=idea.contributorType==='human'?`background:${idea.bg};color:${idea.color};font-family:'Syne',sans-serif;font-weight:700;font-size:.6rem`:`background:${idea.bg}`;
-  const paras=idea.body.split(/\n{2,}/).filter(p=>p.trim()).map(p=>`<p style='margin-bottom:.5rem'>${p.trim()}</p>`).join('');
-  el.innerHTML=`<div class="ibh"><div class="ibav" style="${av}">${idea.emoji}</div><span class="ibnm">${idea.contributor}</span><span class="ibtag" style="background:${idea.bg};color:${idea.color}">${idea.role}</span><span class="iblive">● live</span><span class="ibtoggle open">▾</span></div><div class="ibb"><div class="ibidea"><div class="ibit">${idea.title}</div><div class="ibix">${paras||idea.body}</div></div></div>${idea.tags&&idea.tags.length?`<div class="ibf">${idea.tags.slice(0,4).map(t=>`<span class="ibft">#${t}</span>`).join('')}</div>`:''}\`;
-  el.querySelector('.ibh').addEventListener('click',()=>{
-    const b=el.querySelector('.ibb'),t=el.querySelector('.ibtoggle'),open=!b.classList.contains('collapsed');
-    b.classList.toggle('collapsed',open); t.classList.toggle('open',!open);
+  const el=document.createElement('div');
+  el.className='idea-block';
+  el.dataset.id=id;
+  const av=idea.contributorType==='human'
+    ? 'background:'+idea.bg+';color:'+idea.color+';font-family:\'Syne\',sans-serif;font-weight:700;font-size:.6rem'
+    : 'background:'+idea.bg;
+  const tagHtml=idea.tags&&idea.tags.length
+    ? '<div class="ibf">'+idea.tags.slice(0,4).map(function(t){return '<span class="ibft">#'+t+'</span>';}).join('')+'</div>'
+    : '';
+  el.innerHTML=
+    '<div class="ibh">'+
+      '<div class="ibav" style="'+av+'">'+idea.emoji+'</div>'+
+      '<span class="ibnm">'+idea.contributor+'</span>'+
+      '<span class="ibtag" style="background:'+idea.bg+';color:'+idea.color+'">'+idea.role+'</span>'+
+      '<span class="iblive">&#9679; live</span>'+
+      '<span class="ibtoggle open">&#9662;</span>'+
+    '</div>'+
+    '<div class="ibb">'+
+      '<div class="ibidea">'+
+        '<div class="ibit">'+idea.title+'</div>'+
+        '<div class="ibix">'+idea.body+'</div>'+
+      '</div>'+
+    '</div>'+
+    tagHtml;
+  el.querySelector('.ibh').addEventListener('click',function(){
+    var b=el.querySelector('.ibb');
+    var t=el.querySelector('.ibtoggle');
+    var isOpen=!b.classList.contains('collapsed');
+    b.classList.toggle('collapsed',isOpen);
+    t.classList.toggle('open',!isOpen);
   });
   return el;
 }
-
 function submitHumanIdea(){
   const hid=document.getElementById('hipwho').value, text=document.getElementById('hipidea').value.trim();
   if(!text||!hid) return;
