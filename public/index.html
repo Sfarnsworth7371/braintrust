@@ -238,6 +238,38 @@ textarea.dinarea::placeholder{color:var(--muted)}
 .vvbtn:hover{border-color:var(--teal);color:var(--teal)}
 .vvdisp{font-size:.72rem;color:var(--muted);display:flex;align-items:center;gap:.22rem}
 
+/* BALLOT SELECTION */
+#phase-ballot{display:none;flex:1;overflow:hidden;min-height:0}
+.ballot-layout{display:flex;flex:1;overflow:hidden;min-height:0;height:100%}
+.ballot-ideas-col{flex:1;overflow-y:auto;padding:1rem 1.2rem;display:flex;flex-direction:column;gap:.65rem}
+.ballot-card{background:var(--s1);border:1.5px solid var(--b1);border-radius:var(--r2);overflow:hidden;transition:all .2s;cursor:pointer;flex-shrink:0}
+.ballot-card:hover{border-color:var(--b3);background:var(--s2)}
+.ballot-card.selected{border-color:var(--gold);background:rgba(212,168,67,.06)}
+.ballot-card.selected .bsel-btn{background:var(--gold);color:#1a1000;border-color:var(--gold)}
+.bc-header{padding:.55rem .88rem;border-bottom:1px solid var(--b1);display:flex;align-items:center;gap:.5rem}
+.bc-av{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.72rem;flex-shrink:0}
+.bc-name{font-size:.74rem;font-weight:500}
+.bc-tag{font-size:.58rem;padding:.08rem .38rem;border-radius:4px;margin-left:auto;font-weight:500}
+.bc-body{padding:.72rem .88rem}
+.bc-title{font-family:'Syne',sans-serif;font-size:.88rem;font-weight:700;margin-bottom:.35rem;line-height:1.3;color:var(--text)}
+.bc-text{font-size:.78rem;color:#c0bdb5;line-height:1.58}
+.bc-footer{padding:.45rem .88rem;border-top:1px solid var(--b1);display:flex;align-items:center;gap:.5rem}
+.bsel-btn{margin-left:auto;padding:.26rem .65rem;border:1px solid var(--b2);border-radius:6px;background:none;color:var(--muted2);font-size:.7rem;cursor:pointer;transition:all .2s}
+.bsel-btn:hover{border-color:var(--gold);color:var(--gold)}
+.ballot-sidebar{width:265px;min-width:265px;border-left:1px solid var(--b1);display:flex;flex-direction:column;background:var(--s1);overflow:hidden}
+.bsb-hdr{padding:.65rem 1rem;border-bottom:1px solid var(--b1);font-family:'Syne',sans-serif;font-size:.78rem;font-weight:700}
+.bsb-list{flex:1;overflow-y:auto;padding:.65rem}
+.bsb-empty{font-size:.72rem;color:var(--muted);text-align:center;padding:1.2rem;line-height:1.6}
+.bsb-item{background:var(--s2);border:1px solid var(--b2);border-radius:var(--r);padding:.5rem .7rem;margin-bottom:.38rem;display:flex;align-items:center;gap:.5rem;animation:fadeUp .2s ease}
+.bsb-item-title{font-size:.74rem;font-weight:500;flex:1;line-height:1.3}
+.btn-bsb-remove{background:none;border:none;color:var(--muted);cursor:pointer;font-size:.75rem;padding:.05rem .2rem;transition:color .2s}
+.btn-bsb-remove:hover{color:var(--rose)}
+.bsb-footer{padding:.75rem;border-top:1px solid var(--b1)}
+.btn-open-voting{width:100%;padding:.58rem;background:var(--teal);color:#001a14;border:none;border-radius:var(--r);font-family:'Syne',sans-serif;font-size:.8rem;font-weight:700;cursor:pointer;transition:opacity .2s}
+.btn-open-voting:hover{opacity:.85}
+.btn-open-voting:disabled{opacity:.38;cursor:not-allowed}
+.ballot-count{font-size:.7rem;color:var(--muted);text-align:center;margin-bottom:.5rem}
+
 /* AI VOTES PANEL */
 .voting-layout{display:flex;flex:1;overflow:hidden;min-height:0}
 .vgrid-col{flex:1;overflow-y:auto;padding:1.1rem 1.25rem;display:grid;grid-template-columns:repeat(auto-fill,minmax(248px,1fr));gap:.75rem;align-content:start}
@@ -422,6 +454,25 @@ textarea.dinarea::placeholder{color:var(--muted)}
         </div>
       </div>
 
+      <!-- BALLOT SELECTION -->
+      <div id="phase-ballot">
+        <div class="ballot-layout">
+          <div class="ballot-ideas-col" id="ballot-ideas-col">
+            <div class="empty-state"><div class="es-icon">🗳</div><div class="es-title">No ideas yet</div><div class="es-text">Generate ideas first, then come back to build the ballot.</div></div>
+          </div>
+          <div class="ballot-sidebar">
+            <div class="bsb-hdr">🗳 Voting Ballot</div>
+            <div class="bsb-list" id="bsb-list">
+              <div class="bsb-empty">Select ideas from the left to add them to the ballot.</div>
+            </div>
+            <div class="bsb-footer">
+              <div class="ballot-count" id="ballot-count">0 ideas selected</div>
+              <button class="btn-open-voting" id="btn-open-voting" onclick="openVoting()" disabled>Open Voting →</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- VOTING -->
       <div id="phase-voting">
         <div class="vhdr">
@@ -508,6 +559,12 @@ const PERSONAS = [
    prompt:'You are The Skeptic — you demand evidence, question assumptions, and probe every claim. What is the proof? 2-3 ideas that survive rigorous scrutiny. JSON only.'},
   {id:'maverick',  name:'The Maverick',     role:'Rule-breaker & disruptor', emoji:'🚀', color:'#e06080', bg:'rgba(224,96,128,.15)',
    prompt:'You are The Maverick — you break rules, ignore conventions, and pursue asymmetric bets. Think 10x not 10%. 2-3 genuinely disruptive ideas. JSON only.'},
+  {id:'suburbmom',  name:'Linda',             role:'Suburban mom, 55',          emoji:'🏡', color:'#c89870', bg:'rgba(200,152,112,.15)',
+   prompt:'You are Linda — a 55-year-old suburban mother of two young adults. You are practical, community-minded, and deeply value family, safety, and real-world affordability. You are skeptical of hype and ask "but does this actually work for regular people?" You speak plainly, from lived experience, and have strong opinions about what matters. 2-3 grounded, practical ideas. JSON only.'},
+  {id:'genzrebel',  name:'Zoe',               role:'Urban Gen Z, 22',           emoji:'🔥', color:'#a060e0', bg:'rgba(160,96,224,.15)',
+   prompt:'You are Zoe — a 22-year-old urban Gen Z. You are digital-native, socially conscious, deeply skeptical of institutions and corporate speak, and passionate about authenticity, identity, and collective action. You communicate in sharp, direct language, reference culture and memes naturally, and care intensely about who gets left out. 2-3 ideas that are authentic, bold, and culturally relevant. JSON only.'},
+  {id:'nursingstu',  name:'Marcus',            role:'Nursing student, Vanderbilt', emoji:'💉', color:'#60b8d0', bg:'rgba(96,184,208,.15)',
+   prompt:'You are Marcus — a second-year nursing student at Vanderbilt University. You think rigorously about evidence, patient outcomes, systems under pressure, and human vulnerability. You have seen firsthand what happens when things fail and what genuine care looks like. You are empathetic but also precise. 2-3 ideas grounded in evidence, human wellbeing, and practical systems. JSON only.'},
 ];
 const HC = ['#d4a843','#4ab8a0','#d46878','#9070c8','#6098d0','#d49060'];
 const MAX_VOTES = 3;
@@ -589,6 +646,7 @@ function syncPhase(p){
   phase=p;
   if(p==='ideation') _showIdeation();
   else if(p==='debate') _showDebate();
+  else if(p==='ballot') _showBallot();
   else if(p==='voting') _showVoting();
   else if(p==='results') _showResults();
 }
@@ -738,13 +796,14 @@ function startDebate(){
 
 function _showDebate(){
   phase='debate';
+  document.getElementById('phase-ballot').style.display='none';
   document.getElementById('phase-ideation').style.display='none';
   document.getElementById('phase-debate').style.display='flex';
   document.getElementById('phase-voting').style.display='none';
   document.getElementById('phase-results').style.display='none';
   document.getElementById('ptitle').textContent='Debate';
   document.getElementById('pdesc').textContent='Personas argue the ideas';
-  document.getElementById('btn-next').textContent='Start Voting →';
+  document.getElementById('btn-next').textContent='Build Ballot →';
   document.getElementById('btn-next').onclick=startVoting;
   document.getElementById('btn-next').className='bphase primary';
   document.getElementById('btn-gen').style.display='none';
@@ -845,11 +904,120 @@ function submitHumanDebate(){
 // ── VOTING ────────────────────────────────────────────────────────────────────
 function startVoting(){
   if(Object.keys(allIdeas).length===0){alert('No ideas to vote on!');return;}
-  if(roomCode) fb().update(sref(rp()),{phase:'voting'}); else syncPhase('voting');
+  if(roomCode) fb().update(sref(rp()),{phase:'ballot'}); else syncPhase('ballot');
+}
+
+// ── BALLOT ────────────────────────────────────────────────────────────────────
+var ballotIds = new Set();
+
+function _showBallot(){
+  phase='ballot';
+  document.getElementById('phase-ideation').style.display='none';
+  document.getElementById('phase-debate').style.display='none';
+  document.getElementById('phase-ballot').style.display='flex';
+  document.getElementById('phase-voting').style.display='none';
+  document.getElementById('phase-results').style.display='none';
+  document.getElementById('ptitle').textContent='Build Ballot';
+  document.getElementById('pdesc').textContent='Choose which ideas go to a vote';
+  document.getElementById('btn-next').textContent='Open Voting →';
+  document.getElementById('btn-next').onclick=openVoting;
+  document.getElementById('btn-next').className='bphase primary';
+  document.getElementById('btn-gen').style.display='none';
+  clearInterval(timerInterval); timerRunning=false;
+  document.getElementById('ttoggle').textContent='▶';
+  document.getElementById('twrap').className='twrap voting';
+  document.getElementById('tpreset').innerHTML='<option value="180">3 min</option><option value="300" selected>5 min</option><option value="60">1 min</option>';
+  timerSecs=300; updateTDisp();
+  advanceDot();
+  document.getElementById('plbl').textContent='Ballot';
+  renderBallotIdeas();
+}
+
+function renderBallotIdeas(){
+  var col=document.getElementById('ballot-ideas-col');
+  var ideas=Object.entries(allIdeas);
+  if(!ideas.length){
+    col.innerHTML='<div class="empty-state"><div class="es-icon">🗳</div><div class="es-title">No ideas yet</div><div class="es-text">Generate ideas first.</div></div>';
+    return;
+  }
+  col.innerHTML='';
+  ideas.forEach(function(entry){
+    var id=entry[0], idea=entry[1];
+    var sel=ballotIds.has(id);
+    var av = idea.contributorType==='human'
+      ? 'background:'+idea.bg+';color:'+idea.color+';font-family:Syne,sans-serif;font-weight:700;font-size:.58rem'
+      : 'background:'+idea.bg;
+    var card=document.createElement('div');
+    card.className='ballot-card'+(sel?' selected':'');
+    card.id='bcard-'+id;
+    card.innerHTML=
+      '<div class="bc-header">'
+        +'<div class="bc-av" style="'+av+'">'+idea.emoji+'</div>'
+        +'<span class="bc-name">'+idea.contributor+'</span>'
+        +'<span class="bc-tag" style="background:'+idea.bg+';color:'+idea.color+'">'+idea.role+'</span>'
+      +'</div>'
+      +'<div class="bc-body">'
+        +'<div class="bc-title">'+idea.title+'</div>'
+        +'<div class="bc-text">'+idea.body+'</div>'
+      +'</div>'
+      +'<div class="bc-footer">'
+        +'<button class="bsel-btn" id="bsbtn-'+id+'">'+(sel?'✓ On ballot':'Add to ballot')+'</button>'
+      +'</div>';
+    card.querySelector('.bsel-btn').addEventListener('click', function(e){
+      e.stopPropagation();
+      toggleBallot(id);
+    });
+    card.addEventListener('click', function(){ toggleBallot(id); });
+    col.appendChild(card);
+  });
+}
+
+function toggleBallot(id){
+  if(ballotIds.has(id)){
+    ballotIds.delete(id);
+  } else {
+    ballotIds.add(id);
+  }
+  var card=document.getElementById('bcard-'+id);
+  var btn=document.getElementById('bsbtn-'+id);
+  if(card){ card.classList.toggle('selected', ballotIds.has(id)); }
+  if(btn){ btn.textContent=ballotIds.has(id)?'✓ On ballot':'Add to ballot'; }
+  updateBallotSidebar();
+}
+
+function updateBallotSidebar(){
+  var list=document.getElementById('bsb-list');
+  var count=document.getElementById('ballot-count');
+  var btn=document.getElementById('btn-open-voting');
+  var btnNext=document.getElementById('btn-next');
+  if(ballotIds.size===0){
+    list.innerHTML='<div class="bsb-empty">Select ideas from the left to add them to the ballot.</div>';
+  } else {
+    list.innerHTML='';
+    ballotIds.forEach(function(id){
+      var idea=allIdeas[id];
+      if(!idea) return;
+      var item=document.createElement('div');
+      item.className='bsb-item';
+      item.innerHTML='<div class="bc-av" style="background:'+idea.bg+';font-size:.62rem">'+idea.emoji+'</div>'
+        +'<span class="bsb-item-title">'+idea.title+'</span>'
+        +'<button class="btn-bsb-remove" onclick="toggleBallot(''+id+'')">✕</button>';
+      list.appendChild(item);
+    });
+  }
+  count.textContent=ballotIds.size+' idea'+(ballotIds.size!==1?'s':'')+' selected';
+  btn.disabled=ballotIds.size===0;
+  if(btnNext) btnNext.disabled=ballotIds.size===0;
+}
+
+function openVoting(){
+  if(ballotIds.size===0){alert('Select at least one idea for the ballot!');return;}
+  if(roomCode) fb().update(sref(rp()),{phase:'voting',ballot:Array.from(ballotIds)}); else syncPhase('voting');
 }
 
 function _showVoting(){
   phase='voting';
+  document.getElementById('phase-ballot').style.display='none';
   document.getElementById('phase-ideation').style.display='none';
   document.getElementById('phase-debate').style.display='none';
   document.getElementById('phase-voting').style.display='flex';
@@ -868,7 +1036,8 @@ function _showVoting(){
 }
 
 function renderVGrid(){
-  document.getElementById('vgrid').innerHTML=Object.entries(allIdeas).map(([id,idea])=>`
+  var toShow=ballotIds.size>0 ? Object.entries(allIdeas).filter(function(e){return ballotIds.has(e[0]);}) : Object.entries(allIdeas);
+  document.getElementById('vgrid').innerHTML=toShow.map(([id,idea])=>`
     <div class="vcard ${userVotes.has(id)?'voted':''}" id="vc-${id}">
       <div class="vcbody"><div class="vccont"><div class="vcav" style="background:${idea.bg};color:${idea.color};font-family:'Syne',sans-serif;font-weight:700;font-size:.56rem">${idea.emoji}</div><span class="vccnm">${idea.contributor}</span></div><div class="vctitle">${idea.title}</div><div class="vctext">${idea.body.slice(0,150)}${idea.body.length>150?'…':''}</div></div>
       <div class="vcfoot"><div class="vvdisp">🗳 <span id="vct-${id}">${votes[id]||0}</span></div><button class="vvbtn" id="vb-${id}" onclick="castVote('${id}')">${userVotes.has(id)?'✓ Voted':'Vote'}</button></div>
@@ -970,6 +1139,7 @@ function showResults(){
 
 function _showResults(){
   phase='results';
+  document.getElementById('phase-ballot').style.display='none';
   document.getElementById('phase-ideation').style.display='none';
   document.getElementById('phase-debate').style.display='none';
   document.getElementById('phase-voting').style.display='none';
@@ -1008,7 +1178,7 @@ function renderResults(){
 // ── NEW SESSION ───────────────────────────────────────────────────────────────
 function newSession(){
   if(roomCode){fb().remove(sref(rp('ideas')));fb().remove(sref(rp('votes')));fb().remove(sref(rp('debate')));fb().update(sref(rp()),{phase:'ideation',topic:''});}
-  allIdeas={}; votes={}; userVotes=new Set(); debateIdeaId=null; debateHistory=[];
+  allIdeas={}; votes={}; userVotes=new Set(); debateIdeaId=null; debateHistory=[]; ballotIds=new Set();
   document.getElementById('topic').value='';
   document.getElementById('twrap').style.display='';
   document.getElementById('twrap').className='twrap';
@@ -1023,6 +1193,7 @@ function newSession(){
 
 function _showIdeation(){
   phase='ideation';
+  document.getElementById('phase-ballot').style.display='none';
   document.getElementById('phase-ideation').style.display='flex';
   document.getElementById('phase-debate').style.display='none';
   document.getElementById('phase-voting').style.display='none';
@@ -1048,4 +1219,3 @@ updateTDisp();
 </script>
 </body>
 </html>
-
