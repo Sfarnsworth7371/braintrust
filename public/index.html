@@ -740,7 +740,7 @@ function buildIdeaCard(idea,id){
   el.className='idea-block';
   el.dataset.id=id;
   const av=idea.contributorType==='human'
-    ? 'background:'+idea.bg+';color:'+idea.color+';font-family:\'Syne\',sans-serif;font-weight:700;font-size:.6rem'
+    ? 'background:'+idea.bg+';color:'+idea.color+';font-family:Syne,sans-serif;font-weight:700;font-size:.6rem'
     : 'background:'+idea.bg;
   const tagHtml=idea.tags&&idea.tags.length
     ? '<div class="ibf">'+idea.tags.slice(0,4).map(function(t){return '<span class="ibft">#'+t+'</span>';}).join('')+'</div>'
@@ -986,29 +986,44 @@ function toggleBallot(id){
 }
 
 function updateBallotSidebar(){
-  var list=document.getElementById('bsb-list');
-  var count=document.getElementById('ballot-count');
-  var btn=document.getElementById('btn-open-voting');
-  var btnNext=document.getElementById('btn-next');
-  if(ballotIds.size===0){
-    list.innerHTML='<div class="bsb-empty">Select ideas from the left to add them to the ballot.</div>';
+  var list    = document.getElementById('bsb-list');
+  var count   = document.getElementById('ballot-count');
+  var btn     = document.getElementById('btn-open-voting');
+  var btnNext = document.getElementById('btn-next');
+  list.innerHTML = '';
+  if(ballotIds.size === 0){
+    var empty = document.createElement('div');
+    empty.className = 'bsb-empty';
+    empty.textContent = 'Select ideas from the left to add them to the ballot.';
+    list.appendChild(empty);
   } else {
-    list.innerHTML='';
     ballotIds.forEach(function(id){
-      var idea=allIdeas[id];
+      var idea = allIdeas[id];
       if(!idea) return;
-      var item=document.createElement('div');
-      item.className='bsb-item';
-      item.innerHTML='<div class="bc-av" style="background:'+idea.bg+';font-size:.62rem">'+idea.emoji+'</div>'
-        +'<span class="bsb-item-title">'+idea.title+'</span>'
-        +'<button class="btn-bsb-remove" onclick="toggleBallot(''+id+'')">✕</button>';
+      var item = document.createElement('div');
+      item.className = 'bsb-item';
+      var av = document.createElement('div');
+      av.className = 'bc-av';
+      av.style.cssText = 'background:' + idea.bg + ';font-size:.62rem';
+      av.textContent = idea.emoji;
+      var title = document.createElement('span');
+      title.className = 'bsb-item-title';
+      title.textContent = idea.title;
+      var removeBtn = document.createElement('button');
+      removeBtn.className = 'btn-bsb-remove';
+      removeBtn.textContent = '✕';
+      removeBtn.addEventListener('click', (function(bid){ return function(){ toggleBallot(bid); }; })(id));
+      item.appendChild(av);
+      item.appendChild(title);
+      item.appendChild(removeBtn);
       list.appendChild(item);
     });
   }
-  count.textContent=ballotIds.size+' idea'+(ballotIds.size!==1?'s':'')+' selected';
-  btn.disabled=ballotIds.size===0;
-  if(btnNext) btnNext.disabled=ballotIds.size===0;
+  count.textContent = ballotIds.size + ' idea' + (ballotIds.size !== 1 ? 's' : '') + ' selected';
+  btn.disabled = ballotIds.size === 0;
+  if(btnNext) btnNext.disabled = ballotIds.size === 0;
 }
+
 
 function openVoting(){
   if(ballotIds.size===0){alert('Select at least one idea for the ballot!');return;}
