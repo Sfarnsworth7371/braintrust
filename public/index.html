@@ -77,7 +77,7 @@ textarea#topic::placeholder{color:var(--muted)}
 .ctab{flex:1;padding:.48rem;font-size:.68rem;font-weight:500;background:none;border:none;color:var(--muted);cursor:pointer;transition:all .2s;border-bottom:2px solid transparent}
 .ctab.active{color:var(--gold);border-bottom-color:var(--gold)}
 .ctab:hover:not(.active){color:var(--text)}
-.cscroll{flex:1;overflow-y:auto;padding:.6rem}
+.cscroll{flex:1;overflow-y:auto;padding:.6rem;max-height:calc(100vh - 240px)}
 .pcard{display:flex;align-items:center;gap:.52rem;padding:.52rem .68rem;border-radius:var(--r);background:var(--s2);border:1px solid var(--b1);margin-bottom:.38rem;cursor:pointer;transition:border-color .2s,background .2s}
 .pcard:hover{background:var(--s3);border-color:var(--b2)}
 .pcard.selected{border-color:var(--gold);background:rgba(212,168,67,.07)}
@@ -237,6 +237,23 @@ textarea.dinarea::placeholder{color:var(--muted)}
 .vvbtn{margin-left:auto;padding:.28rem .68rem;border:1px solid var(--b2);border-radius:6px;background:none;color:var(--muted2);font-size:.72rem;cursor:pointer;transition:all .2s}
 .vvbtn:hover{border-color:var(--teal);color:var(--teal)}
 .vvdisp{font-size:.72rem;color:var(--muted);display:flex;align-items:center;gap:.22rem}
+
+/* AI VOTES PANEL */
+.voting-layout{display:flex;flex:1;overflow:hidden;min-height:0}
+.vgrid-col{flex:1;overflow-y:auto;padding:1.1rem 1.25rem;display:grid;grid-template-columns:repeat(auto-fill,minmax(248px,1fr));gap:.75rem;align-content:start}
+.ai-votes-col{width:280px;min-width:280px;border-left:1px solid var(--b1);display:flex;flex-direction:column;background:var(--s1);overflow:hidden}
+.avc-hdr{padding:.65rem 1rem;border-bottom:1px solid var(--b1);font-family:'Syne',sans-serif;font-size:.78rem;font-weight:700;display:flex;align-items:center;gap:.5rem}
+.avc-list{flex:1;overflow-y:auto;padding:.65rem}
+.avc-btn{width:calc(100% - 1.3rem);margin:.65rem;padding:.42rem;background:var(--s3);border:1px solid var(--b2);border-radius:var(--r);color:var(--muted2);font-size:.74rem;cursor:pointer;transition:all .2s;font-family:'Instrument Sans',sans-serif}
+.avc-btn:hover{background:var(--s4);border-color:var(--b3);color:var(--text)}
+.avc-btn:disabled{opacity:.4;cursor:not-allowed}
+.aivote-card{background:var(--s2);border:1px solid var(--b1);border-radius:var(--r);padding:.6rem .75rem;margin-bottom:.42rem;animation:fadeUp .3s ease;flex-shrink:0}
+.aivote-top{display:flex;align-items:center;gap:.45rem;margin-bottom:.3rem}
+.aivote-av{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.72rem;flex-shrink:0}
+.aivote-name{font-size:.72rem;font-weight:500}
+.aivote-pick{margin-left:auto;font-size:.62rem;padding:.08rem .4rem;border-radius:4px;font-weight:500;background:rgba(74,184,160,.15);color:var(--teal);border:1px solid rgba(74,184,160,.2);max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.aivote-reason{font-size:.72rem;color:var(--muted2);line-height:1.45;font-style:italic}
+.aivote-streaming{display:flex;align-items:center;gap:.5rem;padding:.5rem .75rem;margin-bottom:.42rem}
 
 /* RESULTS */
 #phase-results{display:none;flex:1;overflow-y:auto;padding:1.4rem}
@@ -411,7 +428,14 @@ textarea.dinarea::placeholder{color:var(--muted)}
           <div class="vprog"><div class="vprogbar" id="vbar" style="width:0%"></div></div>
           <div class="vclbl" id="vclbl">0 / 3 votes</div>
         </div>
-        <div class="vgrid" id="vgrid"></div>
+        <div class="voting-layout">
+          <div class="vgrid-col" id="vgrid"></div>
+          <div class="ai-votes-col">
+            <div class="avc-hdr">🤖 AI Votes <span style="font-size:.56rem;padding:.06rem .32rem;border-radius:4px;background:rgba(74,184,160,.12);color:var(--teal);border:1px solid rgba(74,184,160,.2);font-family:'Instrument Sans',sans-serif;font-weight:400">live</span></div>
+            <div class="avc-list" id="avc-list"><div style="font-size:.72rem;color:var(--muted);text-align:center;padding:1.2rem;line-height:1.6">AI personas will cast their votes when you click the button below</div></div>
+            <button class="avc-btn" id="avc-btn" onclick="runAIVoting()">Ask AI personas to vote →</button>
+          </div>
+        </div>
       </div>
 
       <!-- RESULTS -->
@@ -464,13 +488,33 @@ const PERSONAS = [
    prompt:`You are The Storyteller — creative director who sees through narrative. 2-3 ideas centered on story or cultural resonance. JSON only.`},
   {id:'connector', name:'The Connector',    role:'Cross-domain synthesizer',  emoji:'🕸️',color:'#a8c060', bg:'rgba(168,192,96,.15)',
    prompt:`You are The Connector — you see links nobody notices. Mash up different industries. 2-3 ideas built on cross-pollination. JSON only.`},
+  {id:'futurist',  name:'The Futurist',     role:'Trend forecaster',         emoji:'🌐', color:'#60c8b0', bg:'rgba(96,200,176,.15)',
+   prompt:'You are The Futurist — obsessed with macro trends, emerging tech, and societal shifts. Extrapolate from weak signals. 2-3 ideas riding the next wave. JSON only.'},
+  {id:'contrarian',name:'The Contrarian',   role:'Unconventional thinker',   emoji:'🔄', color:'#e09050', bg:'rgba(224,144,80,.15)',
+   prompt:'You are The Contrarian — you instinctively question the mainstream. Flip assumptions, argue the opposite, find value in the road not taken. 2-3 counter-intuitive ideas. JSON only.'},
+  {id:'engineer',  name:'The Engineer',     role:'Systems & tech architect', emoji:'⚙️', color:'#80a8c8', bg:'rgba(128,168,200,.15)',
+   prompt:'You are The Engineer — you think in systems, constraints, and elegant technical solutions. Always asking how it actually gets built. 2-3 technically grounded ideas. JSON only.'},
+  {id:'ethicist',  name:'The Ethicist',     role:'Values & responsibility',  emoji:'⚖️', color:'#b8a060', bg:'rgba(184,160,96,.15)',
+   prompt:'You are The Ethicist — you examine ideas through the lens of fairness, unintended consequences, and long-term societal impact. 2-3 ideas that center responsibility and ethics. JSON only.'},
+  {id:'economist', name:'The Economist',    role:'Incentives & markets',     emoji:'💹', color:'#68b878', bg:'rgba(104,184,120,.15)',
+   prompt:'You are The Economist — you think in incentives, market forces, supply and demand, and unintended consequences. 2-3 ideas grounded in economic reasoning. JSON only.'},
+  {id:'designer',  name:'The Designer',     role:'UX & aesthetic thinker',   emoji:'🎨', color:'#c878a8', bg:'rgba(200,120,168,.15)',
+   prompt:'You are The Designer — obsessed with user experience, beauty, and how things feel to use. Every idea must be intuitive and delightful. 2-3 design-led ideas. JSON only.'},
+  {id:'historian', name:'The Historian',    role:'Patterns from the past',   emoji:'📜', color:'#b89868', bg:'rgba(184,152,104,.15)',
+   prompt:'You are The Historian — you find powerful lessons and patterns from history that illuminate the present. 2-3 ideas grounded in historical precedent or analogy. JSON only.'},
+  {id:'optimist',  name:'The Optimist',     role:'Possibility amplifier',    emoji:'☀️', color:'#e0c040', bg:'rgba(224,192,64,.15)',
+   prompt:'You are The Optimist — you see the best possible outcome in every idea and help teams believe it is achievable. Enthusiastic, energizing, specific. 2-3 ideas framed around possibility. JSON only.'},
+  {id:'skeptic',   name:'The Skeptic',      role:'Evidence demander',        emoji:'🧪', color:'#90a8d0', bg:'rgba(144,168,208,.15)',
+   prompt:'You are The Skeptic — you demand evidence, question assumptions, and probe every claim. What is the proof? 2-3 ideas that survive rigorous scrutiny. JSON only.'},
+  {id:'maverick',  name:'The Maverick',     role:'Rule-breaker & disruptor', emoji:'🚀', color:'#e06080', bg:'rgba(224,96,128,.15)',
+   prompt:'You are The Maverick — you break rules, ignore conventions, and pursue asymmetric bets. Think 10x not 10%. 2-3 genuinely disruptive ideas. JSON only.'},
 ];
 const HC = ['#d4a843','#4ab8a0','#d46878','#9070c8','#6098d0','#d49060'];
 const MAX_VOTES = 3;
 
 let roomCode=null, myName='', myId='u_'+Math.random().toString(36).slice(2,9);
 let phase='ideation';
-let selectedAI = new Set(['visionary','pragmatist','wildcard','humanist']);
+let selectedAI = new Set(['visionary','pragmatist','wildcard','humanist','designer','maverick']);
 let humans=[], allIdeas={}, votes={}, userVotes=new Set();
 let debateIdeaId=null, debateHistory=[];
 let timerSecs=600, timerRunning=false, timerInterval=null;
@@ -857,6 +901,68 @@ function castVote(id){
 function refreshVoteCounts(){ for(const [id,cnt] of Object.entries(votes)){const el=document.getElementById('vct-'+id);if(el) el.textContent=cnt;} }
 function updateVProg(){ const p=(userVotes.size/MAX_VOTES)*100; document.getElementById('vbar').style.width=p+'%'; document.getElementById('vclbl').textContent=`${userVotes.size} / ${MAX_VOTES} votes`; }
 
+// ── AI VOTING ─────────────────────────────────────────────────────────────────
+async function runAIVoting(){
+  var btn=document.getElementById('avc-btn');
+  btn.disabled=true; btn.textContent='AI personas voting…';
+  var list=document.getElementById('avc-list');
+  list.innerHTML='';
+  var topic=document.getElementById('topic').value.trim();
+  var ideasSummary=Object.entries(allIdeas).map(function(entry){
+    return '"'+entry[1].title+'": '+entry[1].body.slice(0,80);
+  }).join('\n');
+  var active=PERSONAS.filter(function(p){ return selectedAI.has(p.id); });
+  for(var i=0;i<active.length;i++){
+    await runOneAIVote(active[i],topic,ideasSummary,list);
+  }
+  btn.textContent='Ask AI personas to vote again';
+  btn.disabled=false;
+}
+
+async function runOneAIVote(persona,topic,ideasSummary,list){
+  var sc=document.createElement('div');
+  sc.className='aivote-streaming';
+  sc.innerHTML='<div class="aivote-av" style="background:'+persona.bg+'">'+persona.emoji+'</div>'
+    +'<span style="font-size:.72rem;color:var(--muted)">'+persona.name+' deciding…</span>'
+    +'<div class="dots"><span></span><span></span><span></span></div>';
+  list.appendChild(sc);
+  list.scrollTop=list.scrollHeight;
+  try{
+    var sys=persona.prompt
+      +'\n\nYou are now voting on ideas from a brainstorm session.'
+      +'\nTopic: "'+topic+'"'
+      +'\nIdeas:\n'+ideasSummary
+      +'\n\nPick the ONE idea that best fits your perspective and explain why in one sharp sentence.'
+      +'\nRespond ONLY with valid JSON: {"vote":"exact idea title","reason":"one sentence in your voice"}';
+    var res=await fetch('/api/claude',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:180,
+        messages:[{role:'user',content:sys}]})
+    });
+    var data=await res.json();
+    var raw=data.content.map(function(c){return c.text||'';}).join('').trim();
+    var parsed;
+    try{ parsed=JSON.parse(raw.replace(/```json|```/g,'').trim()); }
+    catch(e){ parsed={vote:'(unclear)',reason:raw.slice(0,120)}; }
+    var card=document.createElement('div');
+    card.className='aivote-card';
+    card.innerHTML='<div class="aivote-top">'
+      +'<div class="aivote-av" style="background:'+persona.bg+'">'+persona.emoji+'</div>'
+      +'<span class="aivote-name">'+persona.name+'</span>'
+      +'<span class="aivote-pick" title="'+parsed.vote+'">'+parsed.vote+'</span>'
+      +'</div>'
+      +'<div class="aivote-reason">“'+parsed.reason+'”</div>';
+    sc.replaceWith(card);
+    list.scrollTop=list.scrollHeight;
+    var matched=Object.entries(allIdeas).find(function(e){ return e[1].title===parsed.vote; });
+    if(matched&&roomCode){
+      var ideaId=matched[0];
+      var cur=(votes[ideaId]||0)+1;
+      fb().set(sref(rp('votes/'+ideaId)),cur);
+    }
+  }catch(e){ sc.innerHTML='<span style="font-size:.72rem;color:var(--muted)">'+persona.emoji+' error</span>'; }
+}
+
 // ── RESULTS ───────────────────────────────────────────────────────────────────
 function showResults(){
   if(roomCode) fb().update(sref(rp()),{phase:'results'}); else syncPhase('results');
@@ -942,3 +1048,4 @@ updateTDisp();
 </script>
 </body>
 </html>
+
